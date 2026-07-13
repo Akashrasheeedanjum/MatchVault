@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MatchVault
 
-## Getting Started
+Football match analysis platform — Phase 1 (Markdown content, AdSense-ready UI).
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) + TypeScript + Tailwind CSS
+- Markdown match articles in `content/matches`
+- Vercel Analytics
+- Google AdSense placeholders (enable via env)
+- Native `sitemap.ts` + `robots.ts` (plus optional `next-sitemap`)
+
+## Quick start
 
 ```bash
+cd matchvault
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Add a match
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Markdown file under `content/matches/<league-slug>/`.
+2. Use the frontmatter template (see sample files).
+3. Restart or refresh — posts are read from disk at build/request time.
 
-## Learn More
+## AdSense
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env.example` to `.env.local` and fill publisher / slot IDs after approval.
+Until then, ad components render labeled placeholders. **Never place ads inside the download section.**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin panel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Set `ADMIN_PASSWORD` and `ADMIN_SECRET` in `.env.local` (see `.env.example`).
+2. Restart `npm run dev`.
+3. Open [/admin/login](http://localhost:3000/admin/login).
+4. Use **New article** for Word-like editing (bold, italic, center) and download URL fields.
 
-## Deploy on Vercel
+Admin routes are cookie-protected. Change the default password before deploying.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Connect the `matchvault` folder to Vercel and set `NEXT_PUBLIC_SITE_URL` to your domain.
