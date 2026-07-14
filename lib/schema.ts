@@ -1,5 +1,6 @@
 import type { MatchPost } from "@/types";
 import { absoluteUrl } from "@/lib/utils";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 export function articleSchema(match: MatchPost) {
   return {
@@ -12,11 +13,11 @@ export function articleSchema(match: MatchPost) {
     dateModified: match.match_date,
     author: {
       "@type": "Organization",
-      name: "MatchVault",
+      name: SITE_NAME,
     },
     publisher: {
       "@type": "Organization",
-      name: "MatchVault",
+      name: SITE_NAME,
       logo: {
         "@type": "ImageObject",
         url: absoluteUrl("/images/logo.svg"),
@@ -37,7 +38,7 @@ export function videoObjectSchema(match: MatchPost) {
     embedUrl: match.youtube_url,
     publisher: {
       "@type": "Organization",
-      name: "MatchVault",
+      name: SITE_NAME,
     },
   };
 }
@@ -78,10 +79,9 @@ export function websiteSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "MatchVault",
+    name: SITE_NAME,
     url: absoluteUrl("/"),
-    description:
-      "Football match analysis, tactical breakdowns, and highlights from top European leagues.",
+    description: SITE_DESCRIPTION,
     potentialAction: {
       "@type": "SearchAction",
       target: absoluteUrl("/matches?q={search_term_string}"),

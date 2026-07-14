@@ -1,8 +1,7 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import type { MatchFrontmatter } from "@/types";
-import { getLeagueByName } from "@/lib/leagues";
+import type { ContentSection, MatchFrontmatter } from "@/types";
 import { slugify } from "@/lib/utils";
 
 const contentDirectory = path.join(process.cwd(), "content", "matches");
@@ -11,13 +10,8 @@ export type MatchFormInput = MatchFrontmatter & {
   contentHtml: string;
 };
 
-function leagueFolder(leagueName: string): string {
-  const league = getLeagueByName(leagueName);
-  return league?.slug || slugify(leagueName);
-}
-
-function filePathFor(leagueName: string, slug: string): string {
-  return path.join(contentDirectory, leagueFolder(leagueName), `${slug}.md`);
+function filePathFor(slug: string): string {
+  return path.join(contentDirectory, "articles", `${slug}.md`);
 }
 
 function findExistingFile(slug: string): string | null {
@@ -39,6 +33,18 @@ function findExistingFile(slug: string): string | null {
   return walk(contentDirectory);
 }
 
+function normalizeSections(
+  sections: ContentSection[] | undefined,
+): ContentSection[] {
+  return (sections || [])
+    .map((section) => ({
+      image: (section.image || "").trim(),
+      text_html: (section.text_html || "").trim(),
+    }))
+    .filter((section) => section.image || section.text_html);
+}
+
+/** Simple blog-style markdown — only fields editors need. */
 export function buildMarkdownFile(input: MatchFormInput): string {
   const {
     contentHtml,
@@ -46,50 +52,28 @@ export function buildMarkdownFile(input: MatchFormInput): string {
     slug,
     excerpt,
     featured_image,
+    content_sections,
+    google_drive_url,
     youtube_url,
-    league,
-    match_date,
-    team_home,
-    team_away,
-    score_home,
-    score_away,
-    goalscorers,
-    possession,
-    shots,
-    referee,
-    tags,
-    download_url,
-    download_size,
-    download_format,
-    faq,
     popular,
+    match_date,
   } = input;
+
+  const sections = normalizeSections(content_sections);
 
   const frontmatter: Record<string, unknown> = {
     title,
     slug,
-    excerpt,
+    excerpt: excerpt || title,
     featured_image,
-    youtube_url,
-    league,
-    match_date,
-    team_home,
-    team_away,
-    score_home: Number(score_home),
-    score_away: Number(score_away),
-    goalscorers: goalscorers || [],
-    possession,
-    shots,
-    referee,
-    tags: tags || [],
+    match_date: match_date || new Date().toISOString().slice(0, 10),
     popular: Boolean(popular),
     content_format: "html",
   };
 
-  if (download_url) frontmatter.download_url = download_url;
-  if (download_size) frontmatter.download_size = download_size;
-  if (download_format) frontmatter.download_format = download_format;
-  if (faq?.length) frontmatter.faq = faq;
+  if (sections.length) frontmatter.content_sections = sections;
+  if (google_drive_url) frontmatter.google_drive_url = google_drive_url;
+  if (youtube_url?.trim()) frontmatter.youtube_url = youtube_url.trim();
 
   const body = (contentHtml || "<p></p>").trim();
   return matter.stringify(`\n${body}\n`, frontmatter);
@@ -107,8 +91,7 @@ export function saveMatchMarkdown(input: MatchFormInput, isUpdate = false) {
     throw new Error(`Match "${slug}" not found.`);
   }
 
-  const target =
-    isUpdate && existing ? existing : filePathFor(payload.league, slug);
+  const target = isUpdate && existing ? existing : filePathFor(slug);
 
   fs.mkdirSync(path.dirname(target), { recursive: true });
 

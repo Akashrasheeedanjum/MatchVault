@@ -20,7 +20,7 @@ export default function ContactPage() {
         Contact
       </h1>
       <p className="mt-3 max-w-2xl text-[var(--muted)]">
-        Questions about MatchVault, partnerships, or content corrections? Send a
+        Questions about Sportify Central store, partnerships, or content corrections? Send a
         message using the form below.
       </p>
 
@@ -77,8 +77,8 @@ export default function ContactPage() {
 
       <p className="mt-8 text-sm text-[var(--muted)]">
         Email:{" "}
-        <a href="mailto:hello@matchvault.com" className="text-[var(--pitch)]">
-          hello@matchvault.com
+        <a href="mailto:hello@sportifycentral.store" className="text-[var(--pitch)]">
+          hello@sportifycentral.store
         </a>
       </p>
       <p className="mt-4 text-sm text-[var(--muted)]">

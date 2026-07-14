@@ -6,12 +6,12 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "MatchVault privacy policy explaining data collection, cookies, analytics, advertising, and GDPR rights.",
+    "Sportify Central store privacy policy explaining data collection, cookies, analytics, advertising, and GDPR rights.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy | MatchVault",
+    title: "Privacy Policy | Sportify Central store",
     description:
-      "How MatchVault collects, uses, and protects personal information.",
+      "How Sportify Central store collects, uses, and protects personal information.",
   },
 };
 
@@ -25,15 +25,15 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-[var(--muted)]">Last updated: 14 July 2026</p>
       <div className="legal-prose mt-6 max-w-3xl">
         <p>
-          MatchVault (&quot;we&quot;, &quot;us&quot;) respects your privacy. This
+          Sportify Central store (&quot;we&quot;, &quot;us&quot;) respects your privacy. This
           policy explains what information we collect, how we use it, and your
           rights under applicable data protection laws including the GDPR.
         </p>
         <h2>Who we are</h2>
         <p>
-          MatchVault is a football analysis website publishing articles, match
+          Sportify Central store is a football analysis website publishing articles, match
           statistics, embedded videos, and optional downloadable media. Contact:{" "}
-          <a href="mailto:privacy@matchvault.com">privacy@matchvault.com</a>.
+          <a href="mailto:privacy@sportifycentral.store">privacy@sportifycentral.store</a>.
         </p>
         <h2>Information we collect</h2>
         <ul>
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         </ul>
         <h2>How we use information</h2>
         <ul>
-          <li>To operate, secure, and improve MatchVault</li>
+          <li>To operate, secure, and improve Sportify Central store</li>
           <li>To respond to enquiries sent through Contact</li>
           <li>To measure traffic, indexing, and content performance</li>
           <li>To display relevant advertising where permitted</li>

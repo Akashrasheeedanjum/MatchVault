@@ -22,7 +22,7 @@ export default async function AdminLayout({
                 href="/admin"
                 className="font-[family-name:var(--font-display)] text-xl text-[var(--gold)]"
               >
-                MatchVault Admin
+                Sportify Central store Admin
               </Link>
               <Link
                 href="/admin/matches/new"

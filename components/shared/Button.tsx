@@ -25,8 +25,10 @@ export function Button({
   href,
   className,
   children,
+  target,
+  rel,
   ...props
-}: ButtonProps) {
+}: ButtonProps & { target?: string; rel?: string }) {
   const classes = cn(
     "inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] disabled:opacity-60",
     variants[variant],
@@ -37,7 +39,12 @@ export function Button({
     const external = href.startsWith("http");
     if (external) {
       return (
-        <a href={href} className={classes} rel="noopener noreferrer">
+        <a
+          href={href}
+          className={classes}
+          target={target || "_blank"}
+          rel={rel || "noopener noreferrer"}
+        >
           {children}
         </a>
       );

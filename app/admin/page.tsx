@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
             Articles
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Create and edit match analysis pages. Files are saved under{" "}
+ Create and edit articles. Files are saved under{" "}
             <code className="text-[var(--pitch)]">content/matches</code>.
           </p>
         </div>
@@ -36,8 +36,7 @@ export default async function AdminDashboardPage() {
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-[var(--line)] bg-[var(--mist)] text-xs uppercase tracking-wider text-[var(--muted)]">
             <tr>
-              <th className="px-4 py-3">Match</th>
-              <th className="px-4 py-3">League</th>
+              <th className="px-4 py-3">Article</th>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Download</th>
               <th className="px-4 py-3">Actions</th>
@@ -50,10 +49,9 @@ export default async function AdminDashboardPage() {
                   <p className="font-medium">{match.title}</p>
                   <p className="text-xs text-[var(--muted)]">/{match.slug}</p>
                 </td>
-                <td className="px-4 py-3">{match.league}</td>
                 <td className="px-4 py-3">{formatDate(match.match_date)}</td>
                 <td className="px-4 py-3">
-                  {match.download_url ? (
+                  {match.google_drive_url ? (
                     <span className="text-[var(--pitch)]">Ready</span>
                   ) : (
                     <span className="text-[var(--muted)]">Coming soon</span>

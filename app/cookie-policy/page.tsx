@@ -6,11 +6,11 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 export const metadata: Metadata = {
   title: "Cookie Policy",
   description:
-    "How MatchVault uses essential, analytics, and advertising cookies, including Google AdSense.",
+    "How Sportify Central store uses essential, analytics, and advertising cookies, including Google AdSense.",
   alternates: { canonical: "/cookie-policy" },
   openGraph: {
-    title: "Cookie Policy | MatchVault",
-    description: "Cookie categories and how to manage them on MatchVault.",
+    title: "Cookie Policy | Sportify Central store",
+    description: "Cookie categories and how to manage them on Sportify Central store.",
   },
 };
 
@@ -26,7 +26,7 @@ export default function CookiePolicyPage() {
       <p className="mt-2 text-sm text-[var(--muted)]">Last updated: 14 July 2026</p>
       <div className="legal-prose mt-6 max-w-3xl">
         <p>
-          This Cookie Policy explains how MatchVault uses cookies and similar
+          This Cookie Policy explains how Sportify Central store uses cookies and similar
           technologies when you visit our pages.
         </p>
         <h2>What are cookies?</h2>
@@ -59,7 +59,7 @@ export default function CookiePolicyPage() {
         <p>
           See our <Link href="/privacy">Privacy Policy</Link> and{" "}
           <Link href="/terms">Terms &amp; Conditions</Link>, or contact{" "}
-          <a href="mailto:privacy@matchvault.com">privacy@matchvault.com</a>.
+          <a href="mailto:privacy@sportifycentral.store">privacy@sportifycentral.store</a>.
         </p>
       </div>
     </Container>

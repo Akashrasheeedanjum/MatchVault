@@ -47,20 +47,40 @@ body {
 
 .prose-match {
   color: var(--ink);
-  font-size: 1.05rem;
-  line-height: 1.8;
+  font-size: 1.075rem;
+  line-height: 1.85;
 }
 
 .prose-match h2 {
   font-family: var(--font-display), sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.65rem;
   letter-spacing: 0.02em;
-  margin: 2rem 0 0.85rem;
-  color: var(--pitch);
+  margin: 1.75rem 0 0.85rem;
+  color: var(--ink);
 }
 
 .prose-match p {
   margin: 0 0 1.15rem;
+}
+
+.article-section {
+  margin-top: 0.5rem;
+}
+
+.article-rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1.75rem 0;
+}
+
+.article-figure {
+  margin: 0 0 1.25rem;
+  overflow: hidden;
+  background: var(--mist);
+}
+
+.article-download {
+  padding-top: 0.5rem;
 }
 
 .prose-match ul {

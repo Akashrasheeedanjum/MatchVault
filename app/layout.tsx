@@ -6,6 +6,7 @@ import { AdClient } from "@/components/ads/AdClient";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { websiteSchema } from "@/lib/schema";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 const teko = Teko({
   variable: "--font-display",
@@ -25,36 +26,34 @@ const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "MatchVault - Football Match Analysis & Highlights",
-    template: "%s | MatchVault",
+    default: `${SITE_NAME} - Football Clips & Match Analysis`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Detailed tactical analysis, match highlights, and full match downloads from Premier League, La Liga, Bundesliga, Serie A, and more.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "football",
     "match analysis",
     "premier league",
     "la liga",
-    "tactical analysis",
+    "scenepack",
     "match highlights",
-    "MatchVault",
+    SITE_NAME,
   ],
-  authors: [{ name: "MatchVault" }],
+  authors: [{ name: SITE_NAME }],
   verification: googleVerification
     ? { google: googleVerification }
     : undefined,
   openGraph: {
-    title: "MatchVault - Football Match Analysis & Highlights",
-    description:
-      "Detailed tactical analysis, match highlights, and full match downloads.",
+    title: `${SITE_NAME} - Football Clips & Match Analysis`,
+    description: SITE_DESCRIPTION,
     url: siteUrl,
-    siteName: "MatchVault",
+    siteName: SITE_NAME,
     images: [
       {
         url: "/images/og-image.svg",
         width: 1200,
         height: 630,
-        alt: "MatchVault",
+        alt: SITE_NAME,
       },
     ],
     locale: "en_US",
@@ -62,9 +61,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MatchVault - Football Match Analysis & Highlights",
-    description:
-      "Detailed tactical analysis, match highlights, and full match downloads.",
+    title: `${SITE_NAME} - Football Clips & Match Analysis`,
+    description: SITE_DESCRIPTION,
     images: ["/images/og-image.svg"],
   },
   robots: {
@@ -89,7 +87,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${teko.variable} ${outfit.variable} h-full`}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${teko.variable} ${outfit.variable} h-full`}
+    >
       <body className="flex min-h-full flex-col antialiased">
         <AdClient />
         <SchemaMarkup data={websiteSchema()} />

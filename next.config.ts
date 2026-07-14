@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     // Parent folder also has a lockfile; pin the app root explicitly.
     root: path.resolve(process.cwd()),
   },
+  async redirects() {
+    return [
+      { source: "/leagues", destination: "/matches", permanent: true },
+      { source: "/leagues/:slug", destination: "/matches", permanent: true },
+      { source: "/teams", destination: "/matches", permanent: true },
+      { source: "/teams/:slug", destination: "/matches", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

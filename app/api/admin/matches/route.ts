@@ -8,9 +8,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as MatchFormInput;
-    if (!body.title || !body.league || !body.contentHtml) {
+    if (!body.title || !body.contentHtml) {
       return NextResponse.json(
-        { error: "Title, league, and article content are required." },
+        { error: "Title and article content are required." },
         { status: 400 },
       );
     }

@@ -1,32 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/shared/Container";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { MatchHero } from "@/components/matches/MatchHero";
-import { MatchInfo } from "@/components/matches/MatchInfo";
-import { MatchVideo } from "@/components/matches/MatchVideo";
 import { MatchContent } from "@/components/matches/MatchContent";
 import { DownloadSection } from "@/components/matches/DownloadSection";
-import { RelatedMatches } from "@/components/matches/RelatedMatches";
-import { RelatedArticles } from "@/components/matches/RelatedArticles";
-import { FaqSection } from "@/components/shared/FaqSection";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { AdSidebar } from "@/components/ads/AdSidebar";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
-import { getAllMatchSlugs, getMatchBySlug } from "@/lib/posts";
-import {
-  getRelatedArticles,
-  getRelatedMatchesForNav,
-  teamSlug,
-} from "@/lib/teams";
+import { FeaturedPost } from "@/components/matches/PostListItem";
+import { getAllMatchSlugs, getMatchBySlug, getPopularMatches } from "@/lib/posts";
 import {
   articleSchema,
   breadcrumbSchema,
   faqSchema,
   videoObjectSchema,
 } from "@/lib/schema";
-import { absoluteUrl, formatDate } from "@/lib/utils";
+import { absoluteUrl, formatRelativeDate } from "@/lib/utils";
+import { SITE_NAME } from "@/lib/site";
+import { FaqSection } from "@/components/shared/FaqSection";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -41,7 +32,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const match = await getMatchBySlug(slug);
-  if (!match) return { title: "Match not found" };
+  if (!match) return { title: "Article not found" };
 
   const url = absoluteUrl(`/matches/${match.slug}`);
 
@@ -79,24 +70,17 @@ export default async function MatchDetailPage({ params }: PageProps) {
   const match = await getMatchBySlug(slug);
   if (!match) notFound();
 
-  const relatedMatches = await getRelatedMatchesForNav(match, 3);
-  const relatedArticles = await getRelatedArticles(
-    match,
-    relatedMatches.map((item) => item.slug),
-    3,
-  );
+  const popular = await getPopularMatches(1);
+  const featured =
+    popular.find((item) => item.slug !== match.slug) || popular[0] || null;
   const faqs = match.faq || [];
-  const homeTeamPath = `/teams/${teamSlug(match.team_home)}`;
-  const awayTeamPath = `/teams/${teamSlug(match.team_away)}`;
 
   const schemas = [
     articleSchema(match),
-    videoObjectSchema(match),
+    ...(match.youtube_url ? [videoObjectSchema(match)] : []),
     breadcrumbSchema([
       { name: "Home", url: "/" },
-      { name: match.league, url: `/leagues/${match.leagueSlug}` },
-      { name: match.team_home, url: homeTeamPath },
-      { name: match.team_away, url: awayTeamPath },
+      { name: "Articles", url: "/matches" },
       { name: match.title, url: `/matches/${match.slug}` },
     ]),
     ...(faqs.length ? [faqSchema(faqs)] : []),
@@ -105,135 +89,54 @@ export default async function MatchDetailPage({ params }: PageProps) {
   return (
     <>
       <SchemaMarkup data={schemas} />
-      <Container className="py-8">
-        <Breadcrumbs
-          items={[
-            { name: "Home", href: "/" },
-            { name: match.league, href: `/leagues/${match.leagueSlug}` },
-            { name: match.team_home, href: homeTeamPath },
-            { name: match.team_away, href: awayTeamPath },
-            { name: `${match.team_home} vs ${match.team_away}` },
-          ]}
-        />
-
-        <nav
-          aria-label="Match path"
-          className="mb-6 rounded-md border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]"
-        >
-          <Link href="/" className="text-[var(--pitch)] hover:underline">
-            Home
-          </Link>
-          <span className="mx-2">→</span>
-          <Link
-            href={`/leagues/${match.leagueSlug}`}
-            className="text-[var(--pitch)] hover:underline"
-          >
-            {match.league}
-          </Link>
-          <span className="mx-2">→</span>
-          <Link href={homeTeamPath} className="text-[var(--pitch)] hover:underline">
-            {match.team_home}
-          </Link>
-          <span className="mx-2">→</span>
-          <Link href={awayTeamPath} className="text-[var(--pitch)] hover:underline">
-            {match.team_away}
-          </Link>
-          <span className="mx-2">→</span>
-          <span className="text-[var(--ink)]">Match analysis</span>
-        </nav>
-
-        <div className="mb-6">
-          <AdBanner position="top" />
-        </div>
-
+      <Container className="py-8 sm:py-10">
+        {/* Content first (no ad above title) — preferred for AdSense review */}
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <article>
-            <MatchHero match={match} />
-            <MatchInfo match={match} />
-            <MatchVideo youtubeUrl={match.youtube_url} title={match.title} />
+          <article className="min-w-0">
+            <header className="mb-6 border-b border-[var(--line)] pb-6">
+              <h1 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-wide text-[var(--ink)] sm:text-4xl md:text-[2.75rem]">
+                {match.title}
+              </h1>
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--muted)]">
+                <span className="font-semibold text-[var(--pitch)]">
+                  {SITE_NAME}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>Last update : {formatRelativeDate(match.match_date)}</span>
+              </div>
+            </header>
 
-            <p className="mb-6 text-sm text-[var(--muted)]">
-              Published {formatDate(match.match_date)} ·{" "}
-              <Link
-                href={`/leagues/${match.leagueSlug}`}
-                className="font-medium text-[var(--pitch)]"
-              >
-                {match.league}
-              </Link>
-              {" · "}
-              <Link href={homeTeamPath} className="font-medium text-[var(--pitch)]">
-                {match.team_home}
-              </Link>
-              {" vs "}
-              <Link href={awayTeamPath} className="font-medium text-[var(--pitch)]">
-                {match.team_away}
-              </Link>
-            </p>
+            <figure className="mb-8 overflow-hidden bg-[var(--mist)]">
+              <Image
+                src={match.featured_image}
+                alt={match.title}
+                width={1200}
+                height={675}
+                priority
+                className="h-auto w-full object-cover"
+                sizes="(max-width: 1024px) 100vw, 800px"
+              />
+            </figure>
 
             <MatchContent match={match} />
-            <FaqSection faqs={faqs} />
-            <RelatedMatches matches={relatedMatches} />
-            <RelatedArticles matches={relatedArticles} />
 
-            {/* NO ADS inside download section */}
-            <DownloadSection match={match} />
+            {faqs.length > 0 ? <FaqSection faqs={faqs} /> : null}
+
+            {/* CRITICAL: no ads inside or adjacent to download controls */}
+            <div className="mt-4">
+              <DownloadSection match={match} />
+            </div>
+
+            {/* Bottom unit well below downloads — clear separation */}
+            <div className="mt-14 border-t border-[var(--line)] pt-10">
+              <AdBanner position="bottom" />
+            </div>
           </article>
 
           <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
-            <AdSidebar />
-            <div className="hidden border border-[var(--line)] bg-[var(--surface)] p-4 lg:block">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--pitch)]">
-                Navigate
-              </h2>
-              <ul className="mt-3 space-y-2 text-sm">
-                <li>
-                  <Link href={`/leagues/${match.leagueSlug}`} className="hover:text-[var(--pitch)]">
-                    {match.league}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={homeTeamPath} className="hover:text-[var(--pitch)]">
-                    {match.team_home}
-                  </Link>
-                </li>
-                <li>
-                  <Link href={awayTeamPath} className="hover:text-[var(--pitch)]">
-                    {match.team_away}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/matches" className="hover:text-[var(--pitch)]">
-                    All matches
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/teams" className="hover:text-[var(--pitch)]">
-                    All teams
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div className="hidden border border-[var(--line)] bg-[var(--surface)] p-4 lg:block">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--pitch)]">
-                Match tags
-              </h2>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {match.tags.map((tag) => (
-                  <li
-                    key={tag}
-                    className="rounded bg-[var(--mist)] px-2 py-1 text-xs text-[var(--ink)]"
-                  >
-                    {tag}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {featured ? <FeaturedPost match={featured} /> : null}
             <AdSidebar />
           </aside>
-        </div>
-
-        <div className="mt-10">
-          <AdBanner position="bottom" />
         </div>
       </Container>
     </>

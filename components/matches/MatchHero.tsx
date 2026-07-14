@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { MatchPost } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatRelativeDate } from "@/lib/utils";
 
 export function MatchHero({ match }: { match: MatchPost }) {
   return (
@@ -19,7 +19,7 @@ export function MatchHero({ match }: { match: MatchPost }) {
 
       <div className="relative px-6 py-10 sm:px-10 sm:py-14">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gold)]">
-          {match.league} · {formatDate(match.match_date)}
+          {formatRelativeDate(match.match_date)}
         </p>
         <h1 className="mt-3 max-w-3xl font-[family-name:var(--font-display)] text-3xl tracking-wide sm:text-5xl">
           {match.title}
@@ -29,8 +29,6 @@ export function MatchHero({ match }: { match: MatchPost }) {
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-white/70">
           <span>{match.readingTime}</span>
-          <span aria-hidden="true">·</span>
-          <span>Referee: {match.referee}</span>
         </div>
       </div>
     </header>

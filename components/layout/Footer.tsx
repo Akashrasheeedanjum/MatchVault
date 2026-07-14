@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Container } from "@/components/shared/Container";
-import { LEAGUES } from "@/lib/leagues";
+import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
 const exploreLinks = [
   { href: "/", label: "Home" },
-  { href: "/matches", label: "All Matches" },
-  { href: "/teams", label: "All Teams" },
+  { href: "/matches", label: "Articles" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -20,14 +19,14 @@ const legalLinks = [
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-[var(--line)] bg-[var(--pitch-deep)] text-white">
-      <Container className="grid gap-10 py-12 md:grid-cols-4">
-        <div className="md:col-span-1">
+      <Container className="grid gap-10 py-12 md:grid-cols-3">
+        <div>
           <p className="font-[family-name:var(--font-display)] text-2xl text-[var(--gold)]">
-            MatchVault
+            {SITE_NAME}
           </p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">
-            Detailed football match analysis, tactical breakdowns, and highlights
-            from Europe&apos;s biggest leagues.
+            {SITE_TAGLINE}. Match write-ups, galleries, and Google Drive
+            downloads.
           </p>
         </div>
 
@@ -43,24 +42,6 @@ export function Footer() {
                   className="text-sm text-white/75 hover:text-white"
                 >
                   {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--gold)]">
-            Leagues
-          </h2>
-          <ul className="mt-4 space-y-2">
-            {LEAGUES.map((league) => (
-              <li key={league.slug}>
-                <Link
-                  href={`/leagues/${league.slug}`}
-                  className="text-sm text-white/75 hover:text-white"
-                >
-                  {league.name}
                 </Link>
               </li>
             ))}
@@ -88,7 +69,9 @@ export function Footer() {
 
       <div className="border-t border-white/10">
         <Container className="flex flex-col gap-2 py-4 text-xs text-white/50 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} MatchVault. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+          </p>
           <p>
             <Link href="/sitemap.xml" className="hover:text-white">
               Sitemap

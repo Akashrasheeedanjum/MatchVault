@@ -53,6 +53,9 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
+        // Avoid duplicates — we add Link + Underline below with custom options.
+        link: false,
+        underline: false,
       }),
       Underline,
       TextAlign.configure({

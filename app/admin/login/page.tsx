@@ -42,7 +42,7 @@ function LoginForm() {
         Admin login
       </h1>
       <p className="mt-2 text-sm text-[var(--muted)]">
-        Protected area for publishing MatchVault articles.
+        Protected area for publishing Sportify Central store articles.
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <label className="block text-sm">

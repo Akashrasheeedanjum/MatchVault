@@ -6,11 +6,11 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 export const metadata: Metadata = {
   title: "Terms & Conditions",
   description:
-    "Terms and conditions for using MatchVault football analysis, media, and download features.",
+    "Terms and conditions for using Sportify Central store football analysis, media, and download features.",
   alternates: { canonical: "/terms" },
   openGraph: {
-    title: "Terms & Conditions | MatchVault",
-    description: "Rules for using the MatchVault website and content.",
+    title: "Terms & Conditions | Sportify Central store",
+    description: "Rules for using the Sportify Central store website and content.",
   },
 };
 
@@ -26,18 +26,17 @@ export default function TermsPage() {
       <p className="mt-2 text-sm text-[var(--muted)]">Last updated: 14 July 2026</p>
       <div className="legal-prose mt-6 max-w-3xl">
         <p>
-          By accessing MatchVault, you agree to these Terms &amp; Conditions. If
+          By accessing Sportify Central store, you agree to these Terms &amp; Conditions. If
           you do not agree, please do not use the site.
         </p>
         <h2>Service description</h2>
         <p>
-          MatchVault publishes football match analysis, statistics, embedded
-          videos, team/league pages, and optional downloadable files for personal
-          informational use.
+          Sportify Central store publishes football match analysis, embedded
+          videos, and optional downloadable files for personal informational use.
         </p>
         <h2>Use of content</h2>
         <p>
-          Articles, analysis, branding, and site design are owned by MatchVault
+          Articles, analysis, branding, and site design are owned by Sportify Central store
           or used under licence. You may not copy, scrape, or republish content
           for commercial purposes without permission.
         </p>
@@ -63,12 +62,12 @@ export default function TermsPage() {
         <h2>Disclaimer</h2>
         <p>
           Match analysis is for informational and entertainment purposes.
-          MatchVault does not guarantee completeness, accuracy of every detail,
+          Sportify Central store does not guarantee completeness, accuracy of every detail,
           or uninterrupted access.
         </p>
         <h2>Limitation of liability</h2>
         <p>
-          To the fullest extent permitted by law, MatchVault is not liable for
+          To the fullest extent permitted by law, Sportify Central store is not liable for
           indirect or consequential losses arising from use of the site.
         </p>
         <h2>Related pages</h2>
@@ -81,7 +80,7 @@ export default function TermsPage() {
         <h2>Contact</h2>
         <p>
           Legal enquiries:{" "}
-          <a href="mailto:legal@matchvault.com">legal@matchvault.com</a>
+          <a href="mailto:legal@sportifycentral.store">legal@sportifycentral.store</a>
         </p>
       </div>
     </Container>

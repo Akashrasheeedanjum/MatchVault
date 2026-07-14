@@ -20,6 +20,7 @@ export const getAllTeams = cache(async (): Promise<TeamInfo[]> => {
 
   for (const match of matches) {
     for (const name of [match.team_home, match.team_away]) {
+      if (!name?.trim()) continue;
       const slug = teamSlug(name);
       const existing = map.get(slug);
       if (existing) {
@@ -64,24 +65,9 @@ export async function getRelatedMatchesForNav(
   limit = 3,
 ): Promise<MatchPost[]> {
   const matches = await getAllMatches();
-  const sameTeams = matches.filter(
-    (match) =>
-      match.slug !== current.slug &&
-      (match.team_home === current.team_home ||
-        match.team_home === current.team_away ||
-        match.team_away === current.team_home ||
-        match.team_away === current.team_away),
-  );
-  if (sameTeams.length >= limit) return sameTeams.slice(0, limit);
-
-  const sameLeague = matches.filter(
-    (match) =>
-      match.slug !== current.slug &&
-      match.leagueSlug === current.leagueSlug &&
-      !sameTeams.some((item) => item.slug === match.slug),
-  );
-
-  return [...sameTeams, ...sameLeague].slice(0, limit);
+  return matches
+    .filter((match) => match.slug !== current.slug)
+    .slice(0, limit);
 }
 
 export async function getRelatedArticles(
@@ -92,12 +78,20 @@ export async function getRelatedArticles(
   const excluded = new Set([current.slug, ...excludeSlugs]);
   const matches = await getAllMatches();
 
-  return matches
-    .filter(
-      (match) =>
-        !excluded.has(match.slug) &&
-        (match.leagueSlug === current.leagueSlug ||
-          match.tags.some((tag) => current.tags.includes(tag))),
-    )
-    .slice(0, limit);
+  const related = matches.filter(
+    (match) =>
+      !excluded.has(match.slug) &&
+      (match.leagueSlug === current.leagueSlug ||
+        (match.tags || []).some((tag) => (current.tags || []).includes(tag))),
+  );
+
+  if (related.length >= limit) return related.slice(0, limit);
+
+  const extras = matches.filter(
+    (match) =>
+      !excluded.has(match.slug) &&
+      !related.some((item) => item.slug === match.slug),
+  );
+
+  return [...related, ...extras].slice(0, limit);
 }
