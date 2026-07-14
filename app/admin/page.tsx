@@ -23,13 +23,13 @@ export default async function AdminDashboardPage() {
             Articles
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Articles save to{" "}
-            <strong className="font-medium text-[var(--ink)]">Cloudinary</strong>{" "}
-            (folder <code className="text-[var(--pitch)]">matchvault/articles</code>
-            ), same account as images. Locally they also write to{" "}
-            <code className="text-[var(--pitch)]">content/matches/articles</code>
-            . Optional: set <code className="text-[var(--pitch)]">GITHUB_TOKEN</code>{" "}
-            to commit into the repo on Vercel.
+            Articles + images save to{" "}
+            <strong className="font-medium text-[var(--ink)]">Cloudinary</strong>
+            . With <code className="text-[var(--pitch)]">GITHUB_TOKEN</code>,
+            articles also commit to{" "}
+            <code className="text-[var(--pitch)]">content/matches/articles</code>{" "}
+            and images to{" "}
+            <code className="text-[var(--pitch)]">public/uploads/images</code>.
           </p>
         </div>
         <Button href="/admin/matches/new" variant="gold">

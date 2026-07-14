@@ -1,4 +1,5 @@
 const ARTICLES_DIR = "content/matches/articles";
+const IMAGES_DIR = "public/uploads/images";
 
 export function isGitHubConfigured(): boolean {
   return Boolean(process.env.GITHUB_TOKEN && getGitHubRepo());
@@ -37,14 +38,13 @@ function authHeaders(): HeadersInit {
   };
 }
 
-async function getFileMeta(
-  slug: string,
+async function getPathMeta(
+  filePath: string,
 ): Promise<{ sha: string; path: string } | null> {
   const repo = getGitHubRepo();
   if (!repo) return null;
-  const path = articlePath(slug);
   const branch = getGitHubBranch();
-  const url = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`;
+  const url = `https://api.github.com/repos/${repo}/contents/${filePath}?ref=${encodeURIComponent(branch)}`;
 
   const response = await fetch(url, {
     headers: authHeaders(),
@@ -57,17 +57,17 @@ async function getFileMeta(
     throw new Error(`GitHub read failed (${response.status}): ${text}`);
   }
 
-  const data = (await response.json()) as { sha?: string };
+  const data = (await response.json()) as { sha?: string; path?: string };
   if (!data.sha) return null;
-  return { sha: data.sha, path };
+  return { sha: data.sha, path: data.path || filePath };
 }
 
-/** Commit markdown into content/matches/articles/{slug}.md on GitHub. */
-export async function commitArticleToGitHub(
-  slug: string,
-  markdown: string,
-  message: string,
-): Promise<{ path: string; htmlUrl?: string }> {
+/** Commit any file (text or binary) into the GitHub repo. */
+export async function commitFileToGitHub(options: {
+  path: string;
+  contentBase64: string;
+  message: string;
+}): Promise<{ path: string; htmlUrl?: string }> {
   const repo = getGitHubRepo();
   if (!repo) {
     throw new Error(
@@ -75,18 +75,17 @@ export async function commitArticleToGitHub(
     );
   }
 
-  const path = articlePath(slug);
-  const existing = await getFileMeta(slug);
+  const existing = await getPathMeta(options.path);
   const branch = getGitHubBranch();
 
   const response = await fetch(
-    `https://api.github.com/repos/${repo}/contents/${path}`,
+    `https://api.github.com/repos/${repo}/contents/${options.path}`,
     {
       method: "PUT",
       headers: authHeaders(),
       body: JSON.stringify({
-        message,
-        content: Buffer.from(markdown, "utf8").toString("base64"),
+        message: options.message,
+        content: options.contentBase64,
         branch,
         ...(existing?.sha ? { sha: existing.sha } : {}),
       }),
@@ -103,9 +102,49 @@ export async function commitArticleToGitHub(
   };
 
   return {
-    path: data.content?.path || path,
+    path: data.content?.path || options.path,
     htmlUrl: data.content?.html_url,
   };
+}
+
+function safeFileName(name: string): string {
+  const base = name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
+  return base.replace(/^\.+/, "") || "image";
+}
+
+/** Backup uploaded image under public/uploads/images/ in the repo. */
+export async function commitImageToGitHub(
+  fileName: string,
+  bytes: Buffer,
+): Promise<{ path: string; publicUrl: string; htmlUrl?: string }> {
+  const stamp = Date.now();
+  const safe = safeFileName(fileName);
+  const path = `${IMAGES_DIR}/${stamp}-${safe}`;
+  const committed = await commitFileToGitHub({
+    path,
+    contentBase64: bytes.toString("base64"),
+    message: `Add uploaded image ${safe}`,
+  });
+
+  return {
+    path: committed.path,
+    // Available on the site after the next deploy that includes this commit
+    publicUrl: `/uploads/images/${stamp}-${safe}`,
+    htmlUrl: committed.htmlUrl,
+  };
+}
+
+/** Commit markdown into content/matches/articles/{slug}.md on GitHub. */
+export async function commitArticleToGitHub(
+  slug: string,
+  markdown: string,
+  message: string,
+): Promise<{ path: string; htmlUrl?: string }> {
+  return commitFileToGitHub({
+    path: articlePath(slug),
+    contentBase64: Buffer.from(markdown, "utf8").toString("base64"),
+    message,
+  });
 }
 
 export async function deleteArticleFromGitHub(slug: string): Promise<boolean> {
@@ -113,7 +152,7 @@ export async function deleteArticleFromGitHub(slug: string): Promise<boolean> {
   const repo = getGitHubRepo();
   if (!repo) return false;
 
-  const existing = await getFileMeta(slug);
+  const existing = await getPathMeta(articlePath(slug));
   if (!existing) return false;
 
   const response = await fetch(
@@ -140,7 +179,7 @@ export async function deleteArticleFromGitHub(slug: string): Promise<boolean> {
 export async function githubArticleExists(slug: string): Promise<boolean> {
   if (!isGitHubConfigured()) return false;
   try {
-    return Boolean(await getFileMeta(slug));
+    return Boolean(await getPathMeta(articlePath(slug)));
   } catch {
     return false;
   }

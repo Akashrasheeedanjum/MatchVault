@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-api";
 import { configureCloudinary, formatBytes } from "@/lib/cloudinary";
+import {
+  commitImageToGitHub,
+  isGitHubConfigured,
+} from "@/lib/article-github";
 
 export const runtime = "nodejs";
 
@@ -68,6 +72,29 @@ export async function POST(request: NextRequest) {
         .end(bytes);
     });
 
+    let githubPath: string | undefined;
+    let githubWarning: string | undefined;
+
+    // Backup image into the repo when GITHUB_TOKEN is set
+    if (!isVideo && isGitHubConfigured()) {
+      try {
+        const ext =
+          uploaded.format ||
+          file.name.split(".").pop() ||
+          "jpg";
+        const baseName = file.name.includes(".")
+          ? file.name
+          : `${file.name}.${ext}`;
+        const committed = await commitImageToGitHub(baseName, bytes);
+        githubPath = committed.path;
+      } catch (error) {
+        githubWarning =
+          error instanceof Error
+            ? error.message
+            : "GitHub image commit failed";
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       url: uploaded.secure_url,
@@ -76,6 +103,8 @@ export async function POST(request: NextRequest) {
       format: (uploaded.format || "").toUpperCase(),
       resourceType: uploaded.resource_type,
       publicId: uploaded.public_id,
+      githubPath,
+      githubWarning,
     });
   } catch (error) {
     const message =
