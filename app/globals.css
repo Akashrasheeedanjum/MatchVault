@@ -31,6 +31,30 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Header nav — plain CSS so desktop links + mobile Menu always work */
+.site-nav-desktop {
+  display: none;
+}
+
+.site-nav-mobile-btn {
+  display: inline-flex;
+}
+
+.site-nav-mobile-panel {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .site-nav-desktop {
+    display: flex;
+  }
+
+  .site-nav-mobile-btn,
+  .site-nav-mobile-panel {
+    display: none !important;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
