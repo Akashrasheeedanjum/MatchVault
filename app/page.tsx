@@ -12,6 +12,8 @@ import { FaqSection } from "@/components/shared/FaqSection";
 import { getAllMatches, getPopularMatches } from "@/lib/posts";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: `${SITE_NAME} - Football Clips & Match Analysis`,
   description: SITE_DESCRIPTION,

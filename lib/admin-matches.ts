@@ -10,6 +10,12 @@ import {
   isServerlessReadonlyFs,
   uploadArticleMarkdown,
 } from "@/lib/article-cloudinary";
+import {
+  commitArticleToGitHub,
+  deleteArticleFromGitHub,
+  githubArticleExists,
+  isGitHubConfigured,
+} from "@/lib/article-github";
 
 const contentDirectory = path.join(process.cwd(), "content", "matches");
 
@@ -86,10 +92,6 @@ export function buildMarkdownFile(input: MatchFormInput): string {
   return matter.stringify(`\n${body}\n`, frontmatter);
 }
 
-function useCloudinaryStore(): boolean {
-  return isServerlessReadonlyFs() || !canWriteLocalContent();
-}
-
 function canWriteLocalContent(): boolean {
   if (isServerlessReadonlyFs()) return false;
   try {
@@ -112,46 +114,118 @@ export async function saveMatchMarkdown(
   const payload = { ...input, slug };
   const markdown = buildMarkdownFile(payload);
 
-  if (useCloudinaryStore()) {
-    if (!isCloudinaryConfigured()) {
-      throw new Error(
-        "Cannot save on this host: set Cloudinary env vars (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) on Vercel.",
+  // Local disk (npm run dev / Node server with writable FS)
+  if (canWriteLocalContent()) {
+    const existing = findExistingFile(slug);
+    if (!isUpdate && existing) {
+      throw new Error(`An article with slug "${slug}" already exists.`);
+    }
+    if (isUpdate && !existing) {
+      throw new Error(`Article "${slug}" not found.`);
+    }
+
+    const target = isUpdate && existing ? existing : filePathFor(slug);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+
+    if (isUpdate && existing && existing !== target) {
+      fs.writeFileSync(target, markdown, "utf8");
+      fs.unlinkSync(existing);
+    } else {
+      fs.writeFileSync(target, markdown, "utf8");
+    }
+
+    // Also mirror to Cloudinary when configured
+    let cloudinaryUrl: string | undefined;
+    if (isCloudinaryConfigured()) {
+      try {
+        const uploaded = await uploadArticleMarkdown(slug, markdown);
+        cloudinaryUrl = uploaded.url;
+      } catch {
+        // local file already saved — Cloudinary mirror is best-effort
+      }
+    }
+
+    return {
+      slug,
+      path: target,
+      storage: "filesystem" as const,
+      cloudinaryUrl,
+    };
+  }
+
+  // Vercel / serverless — cannot write project disk.
+  const hasGitHub = isGitHubConfigured();
+  const hasCloudinary = isCloudinaryConfigured();
+
+  if (!hasGitHub && !hasCloudinary) {
+    throw new Error(
+      "Vercel cannot write content/matches/articles on disk. Fix: add Cloudinary env vars (required for live article save) and optionally GITHUB_TOKEN to also commit into the repo. Then redeploy.",
+    );
+  }
+
+  const remoteCloud = hasCloudinary
+    ? await fetchArticleMarkdownBySlug(slug)
+    : null;
+  const remoteGit = hasGitHub ? await githubArticleExists(slug) : false;
+  const local = findExistingFile(slug);
+
+  if (!isUpdate && (remoteCloud || remoteGit)) {
+    throw new Error(`An article with slug "${slug}" already exists.`);
+  }
+  if (isUpdate && !remoteCloud && !remoteGit && !local) {
+    throw new Error(`Article "${slug}" not found.`);
+  }
+
+  const errors: string[] = [];
+  let githubPath: string | undefined;
+  let cloudinaryUrl: string | undefined;
+
+  // Prefer Cloudinary first so the live site updates immediately
+  if (hasCloudinary) {
+    try {
+      const uploaded = await uploadArticleMarkdown(slug, markdown);
+      cloudinaryUrl = uploaded.url;
+    } catch (error) {
+      errors.push(
+        error instanceof Error ? error.message : "Cloudinary upload failed",
       );
     }
+  }
 
-    const remote = await fetchArticleMarkdownBySlug(slug);
-    const local = findExistingFile(slug);
-
-    if (!isUpdate && (remote || local)) {
-      throw new Error(`A match with slug "${slug}" already exists.`);
+  if (hasGitHub) {
+    try {
+      const committed = await commitArticleToGitHub(
+        slug,
+        markdown,
+        isUpdate ? `Update article ${slug}` : `Add article ${slug}`,
+      );
+      githubPath = committed.path;
+    } catch (error) {
+      errors.push(
+        error instanceof Error ? error.message : "GitHub commit failed",
+      );
     }
-    if (isUpdate && !remote && !local) {
-      throw new Error(`Match "${slug}" not found.`);
-    }
-
-    const result = await uploadArticleMarkdown(slug, markdown);
-    return { slug, path: result.url, storage: "cloudinary" as const };
   }
 
-  const existing = findExistingFile(slug);
-  if (!isUpdate && existing) {
-    throw new Error(`A match with slug "${slug}" already exists.`);
-  }
-  if (isUpdate && !existing) {
-    throw new Error(`Match "${slug}" not found.`);
+  if (!cloudinaryUrl && !githubPath) {
+    throw new Error(`Article save failed: ${errors.join(" | ")}`);
   }
 
-  const target = isUpdate && existing ? existing : filePathFor(slug);
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-
-  if (isUpdate && existing && existing !== target) {
-    fs.writeFileSync(target, markdown, "utf8");
-    fs.unlinkSync(existing);
-  } else {
-    fs.writeFileSync(target, markdown, "utf8");
+  // Cloudinary is required for instant live view on Vercel
+  if (hasCloudinary && !cloudinaryUrl) {
+    throw new Error(
+      `Article must save on Cloudinary for Vercel. ${errors.join(" | ")}`,
+    );
   }
 
-  return { slug, path: target, storage: "filesystem" as const };
+  return {
+    slug,
+    path: cloudinaryUrl || githubPath || "",
+    storage: cloudinaryUrl ? ("cloudinary" as const) : ("github" as const),
+    githubPath,
+    cloudinaryUrl,
+    warnings: errors.length ? errors : undefined,
+  };
 }
 
 export async function deleteMatchMarkdown(slug: string) {
@@ -163,6 +237,15 @@ export async function deleteMatchMarkdown(slug: string) {
     deleted = true;
   }
 
+  if (isGitHubConfigured()) {
+    try {
+      const remoteDeleted = await deleteArticleFromGitHub(slug);
+      deleted = deleted || remoteDeleted;
+    } catch {
+      // continue — try Cloudinary
+    }
+  }
+
   if (isCloudinaryConfigured()) {
     const remoteDeleted = await deleteArticleMarkdown(slug);
     deleted = deleted || remoteDeleted;
@@ -171,10 +254,10 @@ export async function deleteMatchMarkdown(slug: string) {
   if (!deleted) {
     if (isServerlessReadonlyFs() && existing) {
       throw new Error(
-        "This sample article is built into the site. Delete it from the repo, or save a Cloudinary copy to override it.",
+        "This sample article is built into the site. Remove it from GitHub content/matches, or override it by saving again.",
       );
     }
-    throw new Error(`Match "${slug}" not found.`);
+    throw new Error(`Article "${slug}" not found.`);
   }
 }
 

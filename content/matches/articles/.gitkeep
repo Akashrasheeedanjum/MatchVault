@@ -1,0 +1,2 @@
+# Keep this folder for local article saves (npm run dev).
+# On Vercel, articles are stored in Cloudinary (matchvault/articles).

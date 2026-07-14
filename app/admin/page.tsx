@@ -22,10 +22,14 @@ export default async function AdminDashboardPage() {
           <h1 className="font-[family-name:var(--font-display)] text-3xl tracking-wide">
             Articles
           </h1>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            Create and edit articles. On Vercel they save to Cloudinary; locally
-            they save under{" "}
-            <code className="text-[var(--pitch)]">content/matches</code>.
+          <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
+            Articles save to{" "}
+            <strong className="font-medium text-[var(--ink)]">Cloudinary</strong>{" "}
+            (folder <code className="text-[var(--pitch)]">matchvault/articles</code>
+            ), same account as images. Locally they also write to{" "}
+            <code className="text-[var(--pitch)]">content/matches/articles</code>
+            . Optional: set <code className="text-[var(--pitch)]">GITHUB_TOKEN</code>{" "}
+            to commit into the repo on Vercel.
           </p>
         </div>
         <Button href="/admin/matches/new" variant="gold">

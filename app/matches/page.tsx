@@ -8,6 +8,8 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getAllMatches, getPopularMatches } from "@/lib/posts";
 import { SITE_NAME } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "All Articles",
   description: `Browse all ${SITE_NAME} football articles, clips, and Google Drive downloads.`,
