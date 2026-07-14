@@ -8,6 +8,7 @@ import readingTime from "reading-time";
 import type { MatchFrontmatter, MatchPost } from "@/types";
 import { getLeagueByName } from "@/lib/leagues";
 import { slugify } from "@/lib/utils";
+import { fetchAllCloudinaryMarkdown, fetchArticleMarkdownBySlug } from "@/lib/article-cloudinary";
 
 const contentDirectory = path.join(process.cwd(), "content", "matches");
 
@@ -101,25 +102,78 @@ function buildMatchPost(
   };
 }
 
-function parseMatchSummary(filePath: string): MatchPost {
-  const fileContents = fs.readFileSync(filePath, "utf8");
-  const { data, content } = matter(fileContents);
-  return buildMatchPost(data as MatchFrontmatter, content, "");
+function parseMarkdownSource(markdown: string, withHtml: boolean): MatchPost {
+  const { data, content } = matter(markdown);
+  const frontmatter = data as MatchFrontmatter;
+  if (!withHtml) {
+    return buildMatchPost(frontmatter, content, "");
+  }
+
+  const isHtml =
+    frontmatter.content_format === "html" || content.trim().startsWith("<");
+  if (isHtml) {
+    return buildMatchPost(frontmatter, content, content.trim());
+  }
+
+  // Sync path for list views — full HTML resolved in getMatchBySlug.
+  return buildMatchPost(frontmatter, content, "");
 }
 
 function byMatchDateDesc(a: MatchPost, b: MatchPost) {
   return new Date(b.match_date).getTime() - new Date(a.match_date).getTime();
 }
 
-export const getAllMatches = cache(async (): Promise<MatchPost[]> => {
+async function loadLocalMatches(): Promise<MatchPost[]> {
   const files = walkMarkdownFiles(contentDirectory);
-  return files.map(parseMatchSummary).sort(byMatchDateDesc);
+  return files.map((filePath) => {
+    const fileContents = fs.readFileSync(filePath, "utf8");
+    return parseMarkdownSource(fileContents, false);
+  });
+}
+
+async function loadRemoteMatches(): Promise<MatchPost[]> {
+  try {
+    const remote = await fetchAllCloudinaryMarkdown();
+    return remote.map(({ markdown }) => parseMarkdownSource(markdown, false));
+  } catch {
+    return [];
+  }
+}
+
+export const getAllMatches = cache(async (): Promise<MatchPost[]> => {
+  const [local, remote] = await Promise.all([
+    loadLocalMatches(),
+    loadRemoteMatches(),
+  ]);
+
+  const bySlug = new Map<string, MatchPost>();
+  for (const match of local) bySlug.set(match.slug, match);
+  // Cloudinary (admin publishes on Vercel) overrides bundled sample files.
+  for (const match of remote) bySlug.set(match.slug, match);
+
+  return Array.from(bySlug.values()).sort(byMatchDateDesc);
 });
 
 export const getMatchBySlug = cache(
   async (slug: string): Promise<MatchPost | undefined> => {
-    const files = walkMarkdownFiles(contentDirectory);
+    try {
+      const remoteMarkdown = await fetchArticleMarkdownBySlug(slug);
+      if (remoteMarkdown) {
+        const { data, content } = matter(remoteMarkdown);
+        const frontmatter = data as MatchFrontmatter;
+        const isHtml =
+          frontmatter.content_format === "html" ||
+          content.trim().startsWith("<");
+        const contentHtml = isHtml
+          ? content.trim()
+          : (await remark().use(html).process(content)).toString();
+        return buildMatchPost(frontmatter, content, contentHtml);
+      }
+    } catch {
+      // fall through to local files
+    }
 
+    const files = walkMarkdownFiles(contentDirectory);
     for (const filePath of files) {
       const fileContents = fs.readFileSync(filePath, "utf8");
       const { data, content } = matter(fileContents);
@@ -169,11 +223,7 @@ export async function getRelatedMatches(
     .slice(0, limit);
 }
 
-export function getAllMatchSlugs(): string[] {
-  const files = walkMarkdownFiles(contentDirectory);
-  return files.map((filePath) => {
-    const fileContents = fs.readFileSync(filePath, "utf8");
-    const { data } = matter(fileContents);
-    return (data as MatchFrontmatter).slug;
-  });
+export async function getAllMatchSlugs(): Promise<string[]> {
+  const matches = await getAllMatches();
+  return matches.map((match) => match.slug);
 }

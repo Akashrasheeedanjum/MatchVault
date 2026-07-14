@@ -23,7 +23,8 @@ export default async function AdminDashboardPage() {
             Articles
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
- Create and edit articles. Files are saved under{" "}
+            Create and edit articles. On Vercel they save to Cloudinary; locally
+            they save under{" "}
             <code className="text-[var(--pitch)]">content/matches</code>.
           </p>
         </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-api";
 import {
   deleteMatchMarkdown,
@@ -18,7 +19,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { slug } = await context.params;
     const body = (await request.json()) as MatchFormInput;
     const payload = { ...body, slug: body.slug || slug };
-    const result = saveMatchMarkdown(payload, true);
+    const result = await saveMatchMarkdown(payload, true);
+    revalidatePath("/");
+    revalidatePath("/matches");
+    revalidatePath(`/matches/${result.slug}`);
+    revalidatePath("/admin");
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message =
@@ -33,7 +38,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   try {
     const { slug } = await context.params;
-    deleteMatchMarkdown(slug);
+    await deleteMatchMarkdown(slug);
+    revalidatePath("/");
+    revalidatePath("/matches");
+    revalidatePath(`/matches/${slug}`);
+    revalidatePath("/admin");
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message =

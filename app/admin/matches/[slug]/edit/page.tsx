@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditMatchPage({ params }: PageProps) {
   const { slug } = await params;
-  const source = readMatchSource(slug);
+  const source = await readMatchSource(slug);
   if (!source) notFound();
 
   const { frontmatter, content } = source;

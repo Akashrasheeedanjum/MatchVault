@@ -24,7 +24,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return getAllMatchSlugs().map((slug) => ({ slug }));
+  const slugs = await getAllMatchSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({

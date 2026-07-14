@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-api";
 import { saveMatchMarkdown, type MatchFormInput } from "@/lib/admin-matches";
 
@@ -14,7 +15,11 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const result = saveMatchMarkdown(body, false);
+    const result = await saveMatchMarkdown(body, false);
+    revalidatePath("/");
+    revalidatePath("/matches");
+    revalidatePath(`/matches/${result.slug}`);
+    revalidatePath("/admin");
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message =

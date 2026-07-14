@@ -3,6 +3,13 @@ import path from "path";
 import matter from "gray-matter";
 import type { ContentSection, MatchFrontmatter } from "@/types";
 import { slugify } from "@/lib/utils";
+import {
+  deleteArticleMarkdown,
+  fetchArticleMarkdownBySlug,
+  isCloudinaryConfigured,
+  isServerlessReadonlyFs,
+  uploadArticleMarkdown,
+} from "@/lib/article-cloudinary";
 
 const contentDirectory = path.join(process.cwd(), "content", "matches");
 
@@ -79,9 +86,52 @@ export function buildMarkdownFile(input: MatchFormInput): string {
   return matter.stringify(`\n${body}\n`, frontmatter);
 }
 
-export function saveMatchMarkdown(input: MatchFormInput, isUpdate = false) {
+function useCloudinaryStore(): boolean {
+  return isServerlessReadonlyFs() || !canWriteLocalContent();
+}
+
+function canWriteLocalContent(): boolean {
+  if (isServerlessReadonlyFs()) return false;
+  try {
+    const dir = path.join(contentDirectory, "articles");
+    fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, ".write-probe");
+    fs.writeFileSync(probe, "ok", "utf8");
+    fs.unlinkSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function saveMatchMarkdown(
+  input: MatchFormInput,
+  isUpdate = false,
+) {
   const slug = slugify(input.slug || input.title);
   const payload = { ...input, slug };
+  const markdown = buildMarkdownFile(payload);
+
+  if (useCloudinaryStore()) {
+    if (!isCloudinaryConfigured()) {
+      throw new Error(
+        "Cannot save on this host: set Cloudinary env vars (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) on Vercel.",
+      );
+    }
+
+    const remote = await fetchArticleMarkdownBySlug(slug);
+    const local = findExistingFile(slug);
+
+    if (!isUpdate && (remote || local)) {
+      throw new Error(`A match with slug "${slug}" already exists.`);
+    }
+    if (isUpdate && !remote && !local) {
+      throw new Error(`Match "${slug}" not found.`);
+    }
+
+    const result = await uploadArticleMarkdown(slug, markdown);
+    return { slug, path: result.url, storage: "cloudinary" as const };
+  }
 
   const existing = findExistingFile(slug);
   if (!isUpdate && existing) {
@@ -92,29 +142,55 @@ export function saveMatchMarkdown(input: MatchFormInput, isUpdate = false) {
   }
 
   const target = isUpdate && existing ? existing : filePathFor(slug);
-
   fs.mkdirSync(path.dirname(target), { recursive: true });
 
   if (isUpdate && existing && existing !== target) {
-    fs.writeFileSync(target, buildMarkdownFile(payload), "utf8");
+    fs.writeFileSync(target, markdown, "utf8");
     fs.unlinkSync(existing);
   } else {
-    fs.writeFileSync(target, buildMarkdownFile(payload), "utf8");
+    fs.writeFileSync(target, markdown, "utf8");
   }
 
-  return { slug, path: target };
+  return { slug, path: target, storage: "filesystem" as const };
 }
 
-export function deleteMatchMarkdown(slug: string) {
+export async function deleteMatchMarkdown(slug: string) {
   const existing = findExistingFile(slug);
-  if (!existing) throw new Error(`Match "${slug}" not found.`);
-  fs.unlinkSync(existing);
+  let deleted = false;
+
+  if (existing && canWriteLocalContent()) {
+    fs.unlinkSync(existing);
+    deleted = true;
+  }
+
+  if (isCloudinaryConfigured()) {
+    const remoteDeleted = await deleteArticleMarkdown(slug);
+    deleted = deleted || remoteDeleted;
+  }
+
+  if (!deleted) {
+    if (isServerlessReadonlyFs() && existing) {
+      throw new Error(
+        "This sample article is built into the site. Delete it from the repo, or save a Cloudinary copy to override it.",
+      );
+    }
+    throw new Error(`Match "${slug}" not found.`);
+  }
 }
 
-export function readMatchSource(slug: string): {
+export async function readMatchSource(slug: string): Promise<{
   frontmatter: MatchFrontmatter & { content_format?: string };
   content: string;
-} | null {
+} | null> {
+  const remote = await fetchArticleMarkdownBySlug(slug);
+  if (remote) {
+    const { data, content } = matter(remote);
+    return {
+      frontmatter: data as MatchFrontmatter & { content_format?: string },
+      content: content.trim(),
+    };
+  }
+
   const existing = findExistingFile(slug);
   if (!existing) return null;
   const raw = fs.readFileSync(existing, "utf8");
